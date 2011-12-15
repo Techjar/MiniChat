@@ -11,17 +11,13 @@
 package com.techjar.minichat.gui;
 
 import com.techjar.minichat.Client;
+import com.techjar.minichat.gui.document.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.PlainDocument;
 import javax.swing.text.html.*;
 
 /**
