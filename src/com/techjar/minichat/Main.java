@@ -25,11 +25,13 @@ public class Main {
     
     public static void main(String[] args) {
         try {
-            new File("logs/errors/").mkdirs();
+            String folder = (args.length >= 1 ? "server/" : "client/");
+            
+            new File("logs/" + folder + "errors/").mkdirs();
             logger.setUseParentHandlers(false);
             errorLogger.setUseParentHandlers(false);
-            logger.addHandler(new LogHandler("logs/" + dateFormat.format(Calendar.getInstance().getTime()) + ".txt"));
-            errorLogger.addHandler(new LogHandler("logs/errors/" + dateFormat.format(Calendar.getInstance().getTime()) + ".txt"));
+            logger.addHandler(new LogHandler("logs/" + folder + dateFormat.format(Calendar.getInstance().getTime()) + ".txt"));
+            errorLogger.addHandler(new LogHandler("logs/" + folder + "errors/" + dateFormat.format(Calendar.getInstance().getTime()) + ".txt"));
             System.setOut(new PrintStream(new LogOutputStream(logger, Level.INFO), true));
             System.setErr(new PrintStream(new LogOutputStream(errorLogger, Level.SEVERE), true));
             
