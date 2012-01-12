@@ -40,6 +40,7 @@ public class NetHandlerClient extends NetHandler {
     
     @Override
     public void handleChat(Packet3Chat packet) {
+        System.out.println(packet.message);
         Client.client.gui.addChatMessage(packet.message);
     }
     
