@@ -65,6 +65,9 @@ public class User {
             Packet.writePacket(netManager.getOutputStream(), new Packet255Disconnect(reason));
         }
         catch (IOException ex) { }
+        
+        users.remove(this);
+        netManager.user = null;
         String allMsg = new StringBuilder(username).append(" was kicked. (").append(reason).append(')').toString();
         netManager.shutdown(allMsg);
         globalMessage(allMsg);

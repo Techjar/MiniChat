@@ -16,6 +16,7 @@ import com.techjar.minichat.gui.util.SortedListModel.SortOrder;
 import com.techjar.network.packet.Packet;
 import com.techjar.network.packet.Packet255Disconnect;
 import com.techjar.network.packet.Packet5NameChange;
+import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +52,12 @@ public class GUIClient extends javax.swing.JFrame {
         initComponents();
         postInitComponents();
         
-        // Set the icon
-        setIconImage(new ImageIcon("resources/img/icon.png").getImage());
+        // Set the icons
+        List<Image> icons = new ArrayList<Image>();
+        icons.add(new ImageIcon("resources/img/icon/16.png").getImage());
+        icons.add(new ImageIcon("resources/img/icon/32.png").getImage());
+        icons.add(new ImageIcon("resources/img/icon/128.png").getImage());
+        this.setIconImages(icons);
 
         // Position and display the form
         java.awt.Dimension dim = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
