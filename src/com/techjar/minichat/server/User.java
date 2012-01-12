@@ -44,6 +44,15 @@ public class User {
         return tempUser;
     }
     
+    public static User findExact(String username) {
+        username = username.toLowerCase();
+        for (int i = 0; i < users.size(); i++) {
+            User user = users.get(i);
+            if (user.username.toLowerCase().equals(username)) return user;
+        }
+        return null;
+    }
+    
     public static void globalPacket(Packet packet) {
         for (int i = 0; i < users.size(); i++) {
             users.get(i).netManager.queuePacket(packet);

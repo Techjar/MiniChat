@@ -115,7 +115,6 @@ public class NetworkManager {
             Packet packet = Packet.readPacket(inputStream, netHandler.isServer());
             if (packet != null) {
                 recieveQueue.add(packet);
-                System.out.println(packet.getId());
                 return true;
             }
             else shutdown("Reached end of stream!");

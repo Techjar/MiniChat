@@ -39,7 +39,7 @@ public class NetHandlerLogin extends NetHandler {
             netManager.user.kick("Outdated server!");
             return;
         }
-        if (User.find(packet.name) != null) {
+        if (User.findExact(packet.name) != null) {
             netManager.user.kick("Username is already taken!");
             return;
         }

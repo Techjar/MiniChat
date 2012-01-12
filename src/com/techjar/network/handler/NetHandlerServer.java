@@ -33,7 +33,7 @@ public class NetHandlerServer extends NetHandler {
     
     @Override
     public void handleNameChange(Packet5NameChange packet) {
-        if (User.find(packet.name) == null) {
+        if (User.findExact(packet.name) == null) {
             User.globalPacket(new Packet4UserList(netManager.user.username, false));
             User.globalPacket(new Packet4UserList(packet.name, true));
             
