@@ -4,6 +4,7 @@
  */
 package com.techjar.network;
 
+import com.techjar.minichat.server.User;
 import java.util.*;
 import java.net.*;
 import java.io.*;
@@ -37,6 +38,7 @@ public class NetworkManager {
     private volatile int sendQueueLength;
     private final int sendQueueMax;
     public final long connectionNumber;
+    public User user;
     public String terminationReason;
     public Object[] terminationInfo;
     
@@ -70,7 +72,7 @@ public class NetworkManager {
         keepAliveThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true) {
+                while(!isTerminating) {
                     try {
                         Thread.sleep(5000);
                         queuePacket(new Packet0KeepAlive());
@@ -85,15 +87,13 @@ public class NetworkManager {
             @Override
             public void run() {
                 long start;
-                while(true) {
+                while(!isTerminating || sendQueue.size() > 0) {
                     try {
                         start = System.currentTimeMillis();
                         processPackets();
                         Thread.sleep(50 - (System.currentTimeMillis() - start));
                     }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    catch (Exception e) { }
                 }
             }
         });
@@ -146,9 +146,11 @@ public class NetworkManager {
             shutdown("Send buffer overflow!");
             return;
         }
-        if (sendQueue.isEmpty() && System.currentTimeMillis() - timeLastRead > 60000) {
-            shutdown("Connection timed out!");
-            return;
+        if (recieveQueue.isEmpty()) {
+            if (System.currentTimeMillis() - timeLastRead > 60000) {
+                shutdown("Connection timed out!");
+                return;
+            }
         }
         else timeLastRead = System.currentTimeMillis();
         
@@ -167,16 +169,12 @@ public class NetworkManager {
         terminationInfo = info;
         
         try {
-            queuePacketInternal(new Packet255Disconnect(reason));
-        }
-        catch (Exception ex) { }
-        try {
-            processThread.stop();
+            processThread.interrupt();
             processThread = null;
         }
         catch (Exception ex) { }
         try {
-            keepAliveThread.stop();
+            keepAliveThread.interrupt();
             keepAliveThread = null;
         }
         catch (Exception ex) { }
@@ -184,7 +182,7 @@ public class NetworkManager {
             readThread.interrupt();
             readThread = null;
         }
-        catch (Exception ex) { ex.printStackTrace(); }
+        catch (Exception ex) { }
         try {
             writeThread.interrupt();
             writeThread = null;
@@ -206,8 +204,9 @@ public class NetworkManager {
         }
         catch (Exception ex) { }
         isTerminated = true;
-        System.out.println(getRemoteAddress() + " disconnected.");
         netHandler.handleNetworkShutdown(terminationReason, terminationInfo);
+        if (user != null) User.users.remove(user);
+        System.out.println(getRemoteAddress() + " disconnected.");
     }
     
     public void networkError(Exception ex) {

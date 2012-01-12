@@ -14,10 +14,14 @@ import com.techjar.minichat.Client;
 import com.techjar.minichat.gui.document.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.text.html.*;
 
 /**
@@ -30,6 +34,7 @@ public class GUIClient extends javax.swing.JFrame {
     public DefaultListModel userList;
     private List<String> chatSendLog;
     private int chatSendLogIndex = -1;
+    private String lastServer = "";
     
     
     /** Creates new form ClientGUI */
@@ -40,8 +45,11 @@ public class GUIClient extends javax.swing.JFrame {
         preInitComponents();
         initComponents();
         postInitComponents();
+        
+        // Set the icon
+        setIconImage(new ImageIcon("resources/img/icon.png").getImage());
 
-        /* Position and display the form */
+        // Position and display the form
         java.awt.Dimension dim = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((dim.width - getSize().width) / 2, (dim.height - getSize().height) / 2);
         setVisible(true);
@@ -64,12 +72,20 @@ public class GUIClient extends javax.swing.JFrame {
         chatOutputBox = new javax.swing.JTextPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
-        jMenuItem1 = new javax.swing.JMenuItem();
+        menuConnect = new javax.swing.JMenuItem();
+        menuDisconnect = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("MiniChat");
 
+        chatInputBox.setEnabled(false);
+        chatInputBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chatInputBoxActionPerformed(evt);
+            }
+        });
         chatInputBox.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 chatInputBoxKeyPressed(evt);
@@ -77,6 +93,7 @@ public class GUIClient extends javax.swing.JFrame {
         });
 
         chatSendButton.setText("Send");
+        chatSendButton.setEnabled(false);
         chatSendButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chatSendButtonActionPerformed(evt);
@@ -101,18 +118,38 @@ public class GUIClient extends javax.swing.JFrame {
 
         jMenu1.setText("File");
 
-        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_D, java.awt.event.InputEvent.ALT_MASK));
-        jMenuItem1.setText("Disconnect");
+        menuConnect.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.ALT_MASK));
+        menuConnect.setText("Connect");
+        menuConnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuConnectActionPerformed(evt);
+            }
+        });
+        jMenu1.add(menuConnect);
+
+        menuDisconnect.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_D, java.awt.event.InputEvent.ALT_MASK));
+        menuDisconnect.setText("Disconnect");
+        menuDisconnect.setEnabled(false);
+        menuDisconnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuDisconnectActionPerformed(evt);
+            }
+        });
+        jMenu1.add(menuDisconnect);
+
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Edit");
+
+        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_U, java.awt.event.InputEvent.ALT_MASK));
+        jMenuItem1.setText("Username");
         jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem1ActionPerformed(evt);
             }
         });
-        jMenu1.add(jMenuItem1);
+        jMenu2.add(jMenuItem1);
 
-        jMenuBar1.add(jMenu1);
-
-        jMenu2.setText("Edit");
         jMenuBar1.add(jMenu2);
 
         setJMenuBar(jMenuBar1);
@@ -125,10 +162,10 @@ public class GUIClient extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(chatInputBox, javax.swing.GroupLayout.DEFAULT_SIZE, 419, Short.MAX_VALUE)
+                        .addComponent(chatInputBox, javax.swing.GroupLayout.DEFAULT_SIZE, 465, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(chatSendButton))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 482, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -153,9 +190,6 @@ public class GUIClient extends javax.swing.JFrame {
 
 private void chatInputBoxKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_chatInputBoxKeyPressed
     switch (evt.getKeyCode()) {
-        case KeyEvent.VK_ENTER:
-            sendChatMessage();
-            break;
         case KeyEvent.VK_UP:
             if (chatSendLogIndex < chatSendLog.size() - 1) {
                 chatInputBox.setText(chatSendLog.get(++chatSendLogIndex));
@@ -177,8 +211,55 @@ private void chatSendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GE
     chatInputBox.requestFocus();
 }//GEN-LAST:event_chatSendButtonActionPerformed
 
+private void menuDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuDisconnectActionPerformed
+    if (JOptionPane.showConfirmDialog(this, "Are you sure you want to disconnect?", "Disconnect", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+        disconnect("User disconnected!", true);
+    }
+}//GEN-LAST:event_menuDisconnectActionPerformed
+
+private void chatInputBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chatInputBoxActionPerformed
+    sendChatMessage();
+}//GEN-LAST:event_chatInputBoxActionPerformed
+
+private void menuConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuConnectActionPerformed
+    String ip = null; int port = 4120;
+    String input = JOptionPane.showInputDialog(this, "Input the IP of the server.", "Connect", JOptionPane.PLAIN_MESSAGE, null, null, lastServer).toString();
+    if (input == null) return;
+    lastServer = input;
+    
+    try {
+        if (input.indexOf(":") != -1) {
+            if (input.indexOf("[") != -1 && input.indexOf("]") != -1) {
+                ip = input.substring(1, input.indexOf("]"));
+                port = Integer.parseInt(input.substring(input.indexOf("]") + 2));
+            }
+            else if (input.indexOf(":") == input.lastIndexOf(":")) {
+                ip = input.substring(0, input.indexOf(":"));
+                port = Integer.parseInt(input.substring(input.indexOf(":") + 1));
+            }
+            else ip = input;
+        }
+        else ip = input;
+
+        connect(ip, port);
+    }
+    catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, e, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}//GEN-LAST:event_menuConnectActionPerformed
+
 private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-    client.netManager.shutdown("User disconnected!", true);
+    String input = JOptionPane.showInputDialog(this, "Input your new username.", "Change Username", JOptionPane.PLAIN_MESSAGE, null, null, client.username).toString();
+    if (input == null) return;
+    input = input.trim();
+    
+    if (input.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Your username cannot be blank.", "Invalid Username", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    client.username = input;
+    JOptionPane.showMessageDialog(this, "Your username has been changed.", "Success", JOptionPane.INFORMATION_MESSAGE);
 }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     private void preInitComponents() {
@@ -199,19 +280,18 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 
     private void sendChatMessage() {
         if (!chatInputBox.getText().trim().isEmpty()) {
-            System.out.println(chatOutputBox.getText());
             String message = chatInputBox.getText().trim().replaceAll("\\s{2,}", " ");
-            addChatMessage(client.userName + ": " + message);
+            client.sendChatMessage(message);
             addToChatSendLog(message);
             chatInputBox.setText("");
             chatSendLogIndex = -1;
         }
     }
 
-    private void addChatMessage(String message) {
+    public void addChatMessage(String message) {
         try {
             message = parseMessage(message);
-            ((HTMLEditorKit)chatOutputBox.getEditorKit()).insertHTML((HTMLDocument)chatOutputBox.getStyledDocument(), chatOutputBox.getStyledDocument().getLength(), "<div style='color: blue;'>" + message + "</div>", 0, 0, null);
+            ((HTMLEditorKit)chatOutputBox.getEditorKit()).insertHTML((HTMLDocument)chatOutputBox.getStyledDocument(), chatOutputBox.getStyledDocument().getLength(), "<div>" + message + "</div>", 0, 0, null);
             chatOutputBox.setCaretPosition(chatOutputBox.getDocument().getLength());
         }
         catch (Exception ex) {
@@ -239,6 +319,24 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             chatSendLog.add(0, message);
         }
     }
+    
+    public void connect(String ip, int port) throws IOException, UnknownHostException {
+        client.connect(ip, port);
+        menuConnect.setEnabled(false);
+        menuDisconnect.setEnabled(true);
+    }
+    
+    public void disconnect(String reason, Object... info) {
+        client.netManager.shutdown(reason, info);
+        toggleState(false);
+    }
+    
+    public void toggleState(boolean state) {
+        chatInputBox.setEnabled(state);
+        chatSendButton.setEnabled(state);
+        menuConnect.setEnabled(!state);
+        menuDisconnect.setEnabled(state);
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField chatInputBox;
@@ -251,5 +349,7 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JMenuItem menuConnect;
+    private javax.swing.JMenuItem menuDisconnect;
     // End of variables declaration//GEN-END:variables
 }

@@ -4,6 +4,8 @@
  */
 package com.techjar.network;
 
+import com.techjar.minichat.Main;
+import com.techjar.network.packet.Packet1Login;
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -13,11 +15,11 @@ import java.util.*;
  * @author Techjar
  */
 public class NetworkServer {
-    public static List<NetworkManager> pendingConn = Collections.synchronizedList(new ArrayList<NetworkManager>());
+    public static final List<NetworkManager> pendingConn = Collections.synchronizedList(new ArrayList<NetworkManager>());
     
     private volatile boolean isListening;
     private ServerSocket serverSocket;
-    private NetworkAcceptThread acceptThread;
+    private Thread acceptThread;
     
     
     public NetworkServer(InetAddress ip, int port) throws IOException {

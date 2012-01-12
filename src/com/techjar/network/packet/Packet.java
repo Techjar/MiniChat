@@ -53,7 +53,7 @@ public abstract class Packet {
             packet.readData(stream);
         }
         catch (EOFException ex) {
-            System.out.println("Reached end of stream!");
+            //System.out.println("Reached end of stream!");
             return null;
         }
         return packet;
@@ -95,5 +95,6 @@ public abstract class Packet {
         addMapping(Packet2Password.class, 2, false, true);
         addMapping(Packet3Chat.class, 3, true, true);
         addMapping(Packet4UserList.class, 4, true, false);
+        addMapping(Packet255Disconnect.class, 255, true, true);
     }
 }

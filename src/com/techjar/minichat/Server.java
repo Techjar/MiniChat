@@ -9,6 +9,7 @@ import java.net.*;
 import com.techjar.network.*;
 import com.techjar.network.handler.*;
 import com.techjar.network.packet.*;
+import com.techjar.minichat.server.*;
 
 /**
  *

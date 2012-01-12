@@ -11,6 +11,8 @@
 package com.techjar.minichat.gui;
 
 import com.techjar.minichat.Client;
+import com.techjar.minichat.Main;
+import com.techjar.minichat.gui.document.*;
 import javax.swing.*;
 
 /**
@@ -27,6 +29,10 @@ public class GUIClientLogin extends javax.swing.JFrame {
         this.client = client;
         
         initComponents();
+        usernameInput.setDocument(new LimitDocument(32, true));
+        usernameInput.setText("Guest-" + Main.random.nextInt(Short.MAX_VALUE));
+        portInput.setDocument(new IntegerDocument(0, 65535, true));
+        portInput.setText("4120");
 
         /* Position and display the form */
         java.awt.Dimension dim = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
@@ -63,7 +69,7 @@ public class GUIClientLogin extends javax.swing.JFrame {
 
         jLabel3.setText("Port:");
 
-        connectButton.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        connectButton.setFont(new java.awt.Font("Tahoma", 0, 18));
         connectButton.setText("Connect");
         connectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -118,7 +124,7 @@ public class GUIClientLogin extends javax.swing.JFrame {
 private void connectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectButtonActionPerformed
     try {
         if (!usernameInput.getText().trim().isEmpty() && !ipInput.getText().trim().isEmpty() && !portInput.getText().trim().isEmpty()) {
-            client.userName = usernameInput.getText().trim();
+            client.username = usernameInput.getText().trim();
             client.connect(ipInput.getText().trim(), Integer.parseInt(portInput.getText().trim()));
         }
     }
