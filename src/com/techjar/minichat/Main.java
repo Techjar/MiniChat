@@ -23,7 +23,7 @@ public class Main {
     public static final PrintStream sysOut = System.out;
     public static final PrintStream sysErr = System.err;
     public static final Random random = new Random();
-    public static final int version = 1;
+    public static final int version = 2;
     
     
     public static void main(String[] args) {
