@@ -95,6 +95,7 @@ public abstract class Packet {
         addMapping(Packet2Password.class, 2, false, true);
         addMapping(Packet3Chat.class, 3, true, true);
         addMapping(Packet4UserList.class, 4, true, false);
+        addMapping(Packet5NameChange.class, 5, true, true);
         addMapping(Packet255Disconnect.class, 255, true, true);
     }
 }

@@ -43,5 +43,4 @@ public class Packet2Password extends Packet {
     public int getSize() {
         return 2 + (password.length() * 2);
     }
-    
 }

@@ -45,16 +45,17 @@ public class NetHandlerClient extends NetHandler {
     
     @Override
     public void handleUserList(Packet4UserList packet) {
-        if (packet.add) {
-            if (!Client.client.gui.userList.contains(packet.name)) {
-                Client.client.gui.userList.addElement(packet.name);
-            }
+        if (packet.add) Client.client.gui.addUser(packet.name);
+        else Client.client.gui.removeUser(packet.name);
+    }
+    
+    @Override
+    public void handleNameChange(Packet5NameChange packet) {
+        if (packet.accepted) {
+            Client.client.username = packet.name;
+            Client.showMessageDialog("Your username has been changed.", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
-        else {
-            if (Client.client.gui.userList.contains(packet.name)) {
-                Client.client.gui.userList.removeElement(packet.name);
-            }
-        }
+        else Client.showMessageDialog("That username is already taken.", "Invalid Username", JOptionPane.WARNING_MESSAGE);
     }
     
     @Override

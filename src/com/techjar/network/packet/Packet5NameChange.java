@@ -13,34 +13,34 @@ import java.io.IOException;
  *
  * @author Techjar
  */
-public class Packet4UserList extends Packet {
+public class Packet5NameChange extends Packet {
     public String name;
-    public boolean add;
+    public boolean accepted;
     
     
-    public Packet4UserList() {
+    public Packet5NameChange() {
     }
     
-    public Packet4UserList(String name, boolean add) {
+    public Packet5NameChange(String name, boolean accepted) {
         this.name = name;
-        this.add = add;
+        this.accepted = accepted;
     }
     
     @Override
     public void readData(DataInputStream stream) throws IOException {
         name = readString(stream, 32);
-        add = stream.readBoolean();
+        accepted = stream.readBoolean();
     }
 
     @Override
     public void writeData(DataOutputStream stream) throws IOException {
         writeString(stream, name);
-        stream.writeBoolean(add);
+        stream.writeBoolean(accepted);
     }
 
     @Override
     public void process(NetHandler handler) {
-        handler.handleUserList(this);
+        handler.handleNameChange(this);
     }
 
     @Override

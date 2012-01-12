@@ -205,8 +205,14 @@ public class NetworkManager {
         catch (Exception ex) { }
         isTerminated = true;
         netHandler.handleNetworkShutdown(terminationReason, terminationInfo);
-        if (user != null) User.users.remove(user);
-        System.out.println(getRemoteAddress() + " disconnected.");
+        if (user != null) {
+            User.users.remove(user);
+            User.globalPacket(new Packet4UserList(user.username, false));
+            String leaveMsg = new StringBuilder(user.username).append(" has left the chat.").toString();
+            System.out.println(leaveMsg);
+            User.globalMessage(leaveMsg);
+        }
+        else System.out.println(getRemoteAddress() + " disconnected.");
     }
     
     public void networkError(Exception ex) {

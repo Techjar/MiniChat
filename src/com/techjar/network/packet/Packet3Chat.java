@@ -43,5 +43,4 @@ public class Packet3Chat extends Packet {
     public int getSize() {
         return 2 + (message.length() * 2);
     }
-    
 }

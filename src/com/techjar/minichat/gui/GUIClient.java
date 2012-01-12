@@ -11,7 +11,11 @@
 package com.techjar.minichat.gui;
 
 import com.techjar.minichat.Client;
-import com.techjar.minichat.gui.document.*;
+import com.techjar.minichat.gui.util.*;
+import com.techjar.minichat.gui.util.SortedListModel.SortOrder;
+import com.techjar.network.packet.Packet;
+import com.techjar.network.packet.Packet255Disconnect;
+import com.techjar.network.packet.Packet5NameChange;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +35,8 @@ import javax.swing.text.html.*;
 public class GUIClient extends javax.swing.JFrame {
     public static final String lineSep = System.getProperty("line.separator");
     public final Client client;
-    public DefaultListModel userList;
+    private DefaultListModel userList;
+    private SortedListModel userListSorted;
     private List<String> chatSendLog;
     private int chatSendLogIndex = -1;
     private String lastServer = "";
@@ -102,7 +107,7 @@ public class GUIClient extends javax.swing.JFrame {
 
         jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-        chatUserList.setModel(userList);
+        chatUserList.setModel(userListSorted);
         chatUserList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         chatUserList.setAutoscrolls(false);
         jScrollPane2.setViewportView(chatUserList);
@@ -223,7 +228,7 @@ private void chatInputBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
 
 private void menuConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuConnectActionPerformed
     String ip = null; int port = 4120;
-    String input = JOptionPane.showInputDialog(this, "Input the IP of the server.", "Connect", JOptionPane.PLAIN_MESSAGE, null, null, lastServer).toString();
+    String input = (String)JOptionPane.showInputDialog(this, "Input the IP of the server:", "Connect", JOptionPane.PLAIN_MESSAGE, null, null, lastServer);
     if (input == null) return;
     lastServer = input;
     
@@ -250,20 +255,32 @@ private void menuConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
 }//GEN-LAST:event_menuConnectActionPerformed
 
 private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-    String input = JOptionPane.showInputDialog(this, "Input your new username.", "Change Username", JOptionPane.PLAIN_MESSAGE, null, null, client.username).toString();
+    String input = (String)JOptionPane.showInputDialog(this, "Input your new username:", "Change Username", JOptionPane.PLAIN_MESSAGE, null, null, client.username);
     if (input == null) return;
     input = input.trim();
+    if (input.toLowerCase().equals(client.username.toLowerCase())) return;
     
     if (input.isEmpty()) {
         JOptionPane.showMessageDialog(this, "Your username cannot be blank.", "Invalid Username", JOptionPane.WARNING_MESSAGE);
         return;
     }
-    client.username = input;
-    JOptionPane.showMessageDialog(this, "Your username has been changed.", "Success", JOptionPane.INFORMATION_MESSAGE);
+    if (input.length() > 32) {
+        JOptionPane.showMessageDialog(this, "Your username cannot be longer than 32 characters.", "Invalid Username", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    if (client.netManager != null && client.netManager.isRunning()) {
+        client.netManager.queuePacket(new Packet5NameChange(input, false));
+    }
+    else {
+        client.username = input;
+        JOptionPane.showMessageDialog(this, "Your username has been changed.", "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
 }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     private void preInitComponents() {
         userList = new DefaultListModel();
+        userListSorted = new SortedListModel(userList, SortOrder.ASCENDING);
         chatSendLog = new ArrayList<String>();
     }
 
@@ -289,14 +306,19 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     }
 
     public void addChatMessage(String message) {
-        try {
-            message = parseMessage(message);
-            ((HTMLEditorKit)chatOutputBox.getEditorKit()).insertHTML((HTMLDocument)chatOutputBox.getStyledDocument(), chatOutputBox.getStyledDocument().getLength(), "<div>" + message + "</div>", 0, 0, null);
-            chatOutputBox.setCaretPosition(chatOutputBox.getDocument().getLength());
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        final String message2 = parseMessage(message);
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ((HTMLEditorKit)chatOutputBox.getEditorKit()).insertHTML((HTMLDocument)chatOutputBox.getStyledDocument(), chatOutputBox.getStyledDocument().getLength(), "<div>" + message2 + "</div>", 0, 0, null);
+                    chatOutputBox.setCaretPosition(chatOutputBox.getDocument().getLength());
+                }
+                catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
     }
 
     private String parseMessage(String message) {
@@ -327,6 +349,10 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     }
     
     public void disconnect(String reason, Object... info) {
+        try {
+            Packet.writePacket(client.netManager.getOutputStream(), new Packet255Disconnect(reason));
+        }
+        catch (IOException ex) { }
         client.netManager.shutdown(reason, info);
         toggleState(false);
     }
@@ -336,6 +362,29 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         chatSendButton.setEnabled(state);
         menuConnect.setEnabled(!state);
         menuDisconnect.setEnabled(state);
+        if (!state) userList.clear();
+    }
+    
+    public void addUser(final String name) {
+        if (!userList.contains(name)) {
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    userList.addElement(name);
+                }
+            });
+        }
+    }
+    
+    public void removeUser(final String name) {
+        if (userList.contains(name)) {
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    userList.removeElement(name);
+                }
+            });
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

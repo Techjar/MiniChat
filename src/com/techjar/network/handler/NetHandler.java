@@ -42,6 +42,10 @@ public abstract class NetHandler {
         registerPacket(packet);
     }
     
+    public void handleNameChange(Packet5NameChange packet) {
+        registerPacket(packet);
+    }
+    
     public void handleDisconnect(Packet255Disconnect packet) {
         netManager.shutdown(packet.reason);
     }

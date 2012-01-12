@@ -48,6 +48,12 @@ public class NetHandlerLogin extends NetHandler {
         netManager.user = new User(netManager, packet.name);
         User.users.add(netManager.user);
         
+        for (int i = 0; i < User.users.size(); i++) {
+            User user = User.users.get(i);
+            if (!user.username.equals(packet.name)) {
+                netManager.queuePacket(new Packet4UserList(user.username, true));
+            }
+        }
         User.globalPacket(new Packet4UserList(packet.name, true));
         User.globalMessage(new StringBuilder(packet.name).append(" has joined the chat.").toString());
     }
